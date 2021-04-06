@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文件信息</title>
+    #parse("sys/header.html")
+</head>
+<body>
+<div id="rrapp" v-cloak>
+
+
+    <div class="panel panel-success">
+        <div class="panel-heading">搜索文件</div>
+        <form class="form-horizontal" style="padding: 60px;text-align: center;"
+              onsubmit="vm.search('desc');return false;">
+
+            <div class="form-group">
+                <div class="col-sm-2 col-sm-offset-2">
+                    <input type="text" class="form-control" v-model="begin"
+                           onclick="layui.laydate({elem: this, istime: false, format: 'YYYY-MM-DD', choose: function(date){vm.begin=date;}})"
+                           placeholder="开始日期">
+                </div>
+                <div class="col-sm-2  ">
+                    <input type="text" class="form-control" v-model="end"
+                           onclick="layui.laydate({elem: this, istime: false, format: 'YYYY-MM-DD', choose: function(date){vm.end=date;}})"
+                           placeholder="截止日期">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 col-sm-offset-2">
+                    <select name="" id="" class="form-control" v-model="type">
+                        <option value="文档">文档</option>
+                        <option value="PPT">PPT</option>
+                        <option value="图片">图片</option>
+                        <option value="表格">表格</option>
+                        <option value="可执行文件">可执行文件</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="col-sm-4 ">
+                    <div class="input-group">
+                        <input type="text" class="form-control" v-model="key" placeholder="文件名称关键字">
+                        <span class="input-group-btn">
+                        <button class="btn btn-success" type="button" style="width: 80px;"
+                                @click="search('desc')">搜索</button>
+                      </span>
+                    </div>
+
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-12" style="margin-top: 15px;font-size: 13px;color: orange">
+                    注：可搜到用户公开文件和我的文件，然后下载
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel panel-success" v-if="page.list.length && showList">
+        <div class="panel-heading">搜索结果
+            <div class="pull-right">
+                <button class="btn btn-success btn-xs" @click="search('asc')" v-if="order == 'desc'">按日期↑</button>
+                <button class="btn btn-success btn-xs" @click="search('desc')" v-if="order == 'asc'">按日期↓</button>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>文件名称</th>
+                        <th>文档标题</th>
+                        <th>类型</th>
+                        <th>所属用户</th>
+                        <th>保密级别</th>
+                        <th>上传时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="(l,i) in page.list">
+                        <th scope="row">
+                            {{i+1}}
+                        </th>
+                        <td>{{l.name}}</td>
+                        <td>{{l.title}}</td>
+                        <td>{{l.type}}</td>
+                        <td v-if="l.sysUserEntity">{{l.sysUserEntity.username}}</td>
+                        <td>{{l.level}}</td>
+                        <td>{{l.gmttime}}</td>
+                        <td>
+                            <a @click="info(l.id)">详情 </a>
+
+                    </tr>
+
+                    </tbody>
+                </table>
+
+            </div>
+            <div class="table-responsive">
+                <table class="table" style="margin-bottom:0px;">
+                    <tbody>
+                    <tr>
+                        <td>
+                        </td>
+                        <td>
+                            <div class="pull-right text-center" style="margin-top:0px;margin-right:0px">
+                                <small class="text-muted inline m-b-sm ng-binding">每页 <span
+                                        class="ng-binding ng-hide">
+
+                                    <select class="  form-control" style="display: inline-block;width: 40px;padding: 0;"
+                                            v-model="page.limit" @change="search('desc')"><option value="10">10</option><option
+                                            value="30">30</option><option value="50">50</option></select>
+                                     </span>条,当前第&nbsp;<b
+                                        class="ng-binding">{{page.pageNo}}</b>&nbsp;页,共&nbsp;<b class="ng-binding">{{page.total}}</b>&nbsp;页({{page.total}}
+                                    条记录)
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="pull-right text-right">
+                                <ul class="pagination pagination-sm m-t-none m-b-none">
+                                    <li v-if="page.pageNo>1"><a href="javascript:; " @click="prev"><i
+                                            class="fa fa-caret-left"></i></a></li>
+                                    <li v-if="page.page > page.pageNo && page.page != 0" class="">
+                                        <a href="javascript:;" @click="next"><i class="fa  fa-caret-right"></i></a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+
+    <div v-show="!showList" class="panel panel-success">
+        <div class="panel-heading">文件下载</div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文件名称：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.name}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">所属用户：</div>
+                <div class="col-sm-10 fcs" v-if="file.sysUserEntity">
+                    {{file.sysUserEntity.username}}
+                </div>
+            </div>
+
+
+            <div class="form-group" v-if="showInfo">
+                <div class="col-sm-2 control-label">上传时间：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.gmttime}}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者</div>
+                <div class="col-sm-10 fcs">
+                    {{file.author}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档日期</div>
+                <div class="col-sm-10 fcs">
+                    {{file.wdrq}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档标题</div>
+                <div class="col-sm-10 fcs">
+                    {{file.title}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档主题</div>
+                <div class="col-sm-10 fcs">
+                    {{file.subject}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">主关键词</div>
+                <div class="col-sm-10 fcs">
+                    {{file.key}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档关键词（三个用，隔开）</div>
+                <div class="col-sm-10 fcs">
+                    {{file.keys}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者所在单位</div>
+                <div class="col-sm-10 fcs">
+                    {{file.dw}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档类型</div>
+                <div class="col-sm-10 fcs">
+                    {{file.type}}
+                </div>
+            </div>
+
+
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-warning" @click="saveOrUpdate" value="确定下载"/>
+                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+            </div>
+        </form>
+    </div>
+
+    <div v-show="!showList" class="panel panel-success">
+        <div class="panel-heading">给对方留言互动</div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-2 control-label">留言互动</div>
+                <div class="col-sm-10">
+                    <textarea class="form-control"   v-model="content" placeholder="留言内容"
+                              cols="30" rows="5"></textarea>
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-warning" @click="saveOrUpdate1" value="发送留言"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+    var vm = new Vue({
+        el: '#rrapp',
+        data: {
+            page: {
+                page: 0,
+                pageNo: 1,
+                total: 0,
+                list: [],
+                limit: 10
+            },
+            file: {},
+            end: '',
+            begin: '',
+            pub: '',
+            key: '',
+            content: '',
+            type: '',
+            list: [],
+            showAdd: false,
+            showInfo: false,
+            showList: true,
+            order: 'desc'
+        },
+        created: function () {
+
+        },
+        methods: {
+            next: function () {
+                if (this.page.pageNo < this.page.total) {
+                    this.page.pageNo++;
+                    this.search(this.order);
+                }
+
+            },
+            prev: function () {
+                if (this.page.pageNo > 1) {
+                    this.page.pageNo--;
+                    this.search(this.order);
+                }
+
+            },
+            getPage: function () {
+
+            },
+            search: function (order) {
+                if (order) {
+                    this.order = order;
+                }
+                // if (!this.key) {
+                //     layer.msg("请输入关键字")
+                //     return;
+                // }
+                var param = {};
+                param.limit = this.page.limit;
+                param.page = this.page.pageNo;
+                param.order = this.order;
+                param.type = this.type;
+                param.name = this.key;
+                param.begin = this.begin;
+                param.end = this.end;
+
+                //list3
+                $.ajax({
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    cache: false,
+                    type: "POST",
+                    url: "../file/list3",
+                    data: param,
+                    success: function (r) {
+                        if (r.code == 0) {
+                            vm.page.list = r.page.list;
+                            vm.page.total = r.page.totalCount;
+                            vm.page.page = r.page.totalPage;
+                            if (r.page.list.length == 0) {
+                                layer.msg('没搜索到相关结果');
+                            }
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            },
+            info: function (id) {
+                vm.showAdd = false;
+                vm.showList = false;
+                vm.showInfo = true;
+                vm.title = "详情";
+
+                $.get("../file/info/" + id, function (r) {
+                    vm.file = r.file;
+                });
+            },
+        saveOrUpdate1: function (event) {
+                if(!this.content){
+                    layer.msg('请输入留言');return ;
+                }
+            $.ajax({
+                type: "POST",
+                url: "../msg/save",
+                data: JSON.stringify({
+                    user1:vm.file.user,
+                    content:vm.content
+                }),
+                success: function (r) {
+                    if (r.code === 0) {
+                         layer.msg('留言成功');
+                         vm.content = ''
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        }
+        ,
+            saveOrUpdate: function (event) {
+
+
+                $.ajax({
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    cache: false,
+                    type: "POST",
+                    url: "../file/get/" + this.file.id,
+                    data: {pub: this.pub},
+                    success: function (r) {
+                        if (r.code == 0) {
+                            console.log(r);
+                            layer.msg('验证通过，下载中...');
+                            window.open(r.file.url);
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            },
+            reload: function (event) {
+                vm.showList = true;
+                vm.showInfo = false;
+                vm.showAdd = false;
+            }
+
+        }
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.learn.dao.FileDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.learn.entity.FileEntity" id="fileMap">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="user" column="user"/>
+        <result property="url" column="url"/>
+        <result property="level" column="level"/>
+        <result property="gmttime" column="gmtTime"/>
+    </resultMap>
+
+    <select id="queryObject" resultType="com.learn.entity.FileEntity">
+		select * from file where id = #{value}
+	</select>
+
+    <select id="queryList" resultType="com.learn.entity.FileEntity">
+        select * from file where 1=1
+        <if test="name != null and name != ''">
+            and name like '%${name}%'
+        </if>
+
+        <if test="user != null and user != ''">
+            and user = #{user}
+        </if>
+
+
+        <choose>
+            <when test="sidx != null and sidx.trim() != ''">
+                order by ${sidx} ${order}
+            </when>
+            <otherwise>
+                order by id desc
+            </otherwise>
+        </choose>
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+    </select>
+
+    <select id="queryList2" resultType="com.learn.entity.FileEntity">
+        select * from ( SELECT DISTINCT a.* from(
+
+        select * from file where 1=1 and level = '普通' and (
+        name like '%${name}%'
+        or
+        author like '%${name}%' or
+        subject like '%${name}%' or
+        `key` like '%${name}%' or
+        `keys` like '%${name}%' or
+        dw like '%${name}%'
+
+
+        )
+
+        <if test="type != null and type != ''">
+            and type = #{type}
+        </if>
+
+        UNION
+        select * from file where 1=1 and user = #{user} and (
+        name like '%${name}%'
+        or
+        author like '%${name}%' or
+        subject like '%${name}%' or
+        `key` like '%${name}%' or
+        `keys` like '%${name}%' or
+        dw like '%${name}%'
+
+        )
+
+        <if test="type != null and type != ''">
+            and type = #{type}
+        </if>
+
+        ) a) b
+
+        where  1=1
+        <if test="begin != null and begin != ''">
+            and b.gmtTime >= #{begin}
+        </if>
+        <if test="end != null and end != ''">
+            and   #{end} >= b.gmtTime
+        </if>
+
+
+        order by b.${sidx} ${order}
+
+        <if test="offset != null and limit != null">
+            limit #{offset}, #{limit}
+        </if>
+
+
+    </select>
+
+    <select id="queryTotal" resultType="int">
+        select count(*) from file where 1=1
+        <if test="name != null and name != ''">
+            and name like '%${name}%'
+        </if>
+        <if test="user != null and user != ''">
+            and user = #{user}
+        </if>
+    </select>
+
+    <select id="queryTotal2" resultType="int">
+        select count(*) from ( SELECT DISTINCT a.* from(
+
+        select * from file where 1=1 and level = '普通' and (
+        name like '%${name}%'
+        or
+        author like '%${name}%' or
+        subject like '%${name}%' or
+        `key` like '%${name}%' or
+        `keys` like '%${name}%' or
+        dw like '%${name}%'
+
+
+        )
+
+        <if test="type != null and type != ''">
+            and type = #{type}
+        </if>
+
+
+        UNION
+        select * from file where 1=1 and (
+        name like '%${name}%'
+        or
+        author like '%${name}%' or
+        subject like '%${name}%' or
+        `key` like '%${name}%' or
+        `keys` like '%${name}%' or
+        dw like '%${name}%'
+        ) and user = #{user}
+
+        <if test="type != null and type != ''">
+            and type = #{type}
+        </if>
+
+        ) a) b
+
+        where  1=1
+        <if test="begin != null and begin != ''">
+            and b.gmtTime >= #{begin}
+        </if>
+        <if test="end != null and end != ''">
+            and   #{end} >= b.gmtTime
+        </if>
+
+    </select>
+
+    <insert id="save" parameterType="com.learn.entity.FileEntity">
+		insert into file
+		(
+			`name`,
+			`user`,
+			`url`,
+			`level`,
+			`gmtTime`,
+			`hash`,
+			`author`,
+			`wdrq`,
+			`title`,
+			`subject`,
+			`key`,
+			`keys`,
+			`dw`,
+			`type`,`begin`,`end`
+		)
+		values
+		(
+			#{name},
+			#{user},
+			#{url},
+			#{level},
+			#{gmttime},
+			#{hash},
+			#{author},
+			#{wdrq},
+			#{title},
+			#{subject},
+			#{key},
+			#{keys},
+			#{dw},
+			#{type},#{begin},#{end}
+		)
+	</insert>
+
+    <update id="update" parameterType="com.learn.entity.FileEntity">
+        update file
+        <set>
+            <if test="name != null">`name` = #{name},</if>
+            <if test="user != null">`user` = #{user},</if>
+            <if test="url != null">`url` = #{url},</if>
+            <if test="level != null">`level` = #{level},</if>
+            <if test="gmttime != null">`gmtTime` = #{gmttime},</if>
+            <if test="author != null">`author` = #{author},</if>
+            <if test="wdrq != null">`wdrq` = #{wdrq},</if>
+            <if test="title != null">`title` = #{title},</if>
+            <if test="subject != null">`subject` = #{subject},</if>
+            `begin` = #{begin},
+             `end` = #{end},
+            <if test="key != null">`key` = #{key},</if>
+            <if test="keys != null">`keys` = #{keys},</if>
+            <if test="dw != null">`dw` = #{dw},</if>
+            <if test="type != null">`type` = #{type}</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="delete">
+		delete from file where id = #{value}
+	</delete>
+
+    <delete id="deleteBatch">
+        delete from file where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

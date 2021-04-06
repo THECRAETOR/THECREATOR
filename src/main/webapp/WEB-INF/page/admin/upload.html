@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文件信息</title>
+    #parse("sys/header.html")
+</head>
+<body>
+<div id="rrapp" v-cloak>
+
+
+    <div class="panel panel-success">
+        <div class="panel-heading">上传文件（可多选，上传后请在“我的文件”中修改资料）</div>
+        <form class="form-horizontal" style="padding: 60px;text-align: center;">
+            <div class="form-group">
+                <div class="col-sm-12 fcs">
+                    <span style="padding-top: 6px;">文件保密级别：</span>
+
+                    <label class="radio-inline">
+                        <input type="radio" name="level" checked value="普通" onchange="init()"> 普通
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="level"  value="私密" onchange="init()"> 私密
+                    </label>
+
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-12">
+                    <button class="btn btn-success" style="width: 150px;margin: auto" id="upload">批量上传文件</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-12" style="margin-top: 15px;font-size: 13px;color: orange">
+                    注：普通文件会被其他人搜索到，可以下载，私密文件不会被搜索到。
+                    <br>
+                    如果设置了开放的时间段，则非开发时间段为私密，开放时间段为公开。
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="panel panel-success">
+        <div class="panel-heading">上传文件（单选）</div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文件：</div>
+                <div class="col-sm-10 fcs">
+
+                    <button class="btn btn-success" style="width: 150px;margin: auto" id="upload1">选择文件</button>
+                    <a target="_blank" :href="file.url" v-if="file.url"
+                       style="display: block;margin-top: 15px">{{file.name}}</a>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">保密级别：</div>
+                <div class="col-sm-10 fcs">
+                    <label class="radio-inline">
+                        <input type="radio" name="level1" value="普通" v-model="file.level"> 普通
+                    </label>
+                    <label class="radio-inline">
+                        <input type="radio" name="level1" checked value="私密" v-model="file.level"> 私密
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">公开起止日期</div>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.begin"
+                           onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD hh:mm:ss', choose: function(date){vm.file.begin=date;}})"
+                           placeholder="开始日期"/>
+                </div>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.end"
+                           onclick="layui.laydate({elem: this, time: true, format: 'YYYY-MM-DD hh:mm:ss',  choose: function(date){vm.file.end=date;}})"
+                           placeholder="结束日期"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.author"
+                           placeholder="作者"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档日期</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.wdrq"
+                           onclick="layui.laydate({elem: this, istime: false, format: 'YYYY-MM-DD', choose: function(date){vm.file.wdrq=date;}})"
+                           placeholder="文档日期"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档标题</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.title"
+                           placeholder="文档标题"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档主题</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.subject"
+                           placeholder="文档主题"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">主关键词</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.key" placeholder="主关键词"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档关键词（三个用，隔开）</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.keys"
+                           placeholder="文档关键词（三个）"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者所在单位</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.dw"
+                           placeholder="作者所在单位"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档类型</div>
+                <div class="col-sm-10">
+                    <select name="" id="" class="form-control" :disabled="showInfo" v-model="file.type">
+                        <option value="文档">文档</option>
+                        <option value="PPT">PPT</option>
+                        <option value="图片">图片</option>
+                        <option value="表格">表格</option>
+                        <option value="可执行文件">可执行文件</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定保存" v-if="!showInfo"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        init();
+        new AjaxUpload('#upload1', {
+            action: '../file/upload1',
+            name: 'file',
+            data: {level: $("[name='level']:checked").val()},
+            autoSubmit: true,
+            responseType: "json",
+            onSubmit: function (file, extension) {
+                // if (!(extension && /^(jpg|jpeg|png|gif)$/.test(extension.toLowerCase()))){
+                //     alert('只支持jpg、png、gif格式的图片！');
+                //     return false;
+                // }
+            },
+            onComplete: function (file, r) {
+                if (r.code == 0) {
+                    vm.file.url = r.url;
+                    vm.file.name = r.name;
+                } else {
+                    alert(r.msg);
+                }
+            }
+        });
+
+    })
+
+    function init() {
+        console.log($("[name='level']:checked").val())
+        new AjaxUpload('#upload', {
+            action: '../file/upload',
+            name: 'file',
+            data: {level: $("[name='level']:checked").val()},
+            autoSubmit: true,
+            responseType: "json",
+            onSubmit: function (file, extension) {
+                // if (!(extension && /^(jpg|jpeg|png|gif)$/.test(extension.toLowerCase()))){
+                //     alert('只支持jpg、png、gif格式的图片！');
+                //     return false;
+                // }
+            },
+            onComplete: function (file, r) {
+                if (r.code == 0) {
+                    alert('上传成功，请在“我的文件”中查看吧');
+                } else {
+                    alert(r.msg);
+                }
+            }
+        });
+    }
+
+
+    var vm = new Vue({
+        el: '#rrapp',
+        data: {
+            q: {
+                name: ''
+            },
+            showAdd: false,
+            showInfo: false,
+            showList: true,
+            title: null,
+            file: {url: '', level: '普通',name:''},
+            pub: ''
+        },
+        created: function () {
+
+        },
+        methods: {
+            query: function () {
+                vm.reload();
+            }
+            ,
+            add: function () {
+                vm.showAdd = true;
+                vm.showList = false;
+                vm.title = "新增";
+                vm.file = {url: '', level: '普通',name:""};
+            }
+            ,
+            update: function (id) {
+
+                vm.showAdd = true;
+                vm.showList = false;
+                vm.title = "修改";
+
+                vm.getInfo(id)
+            }
+            ,
+
+            saveOrUpdate: function (event) {
+                if(!vm.file.author ||
+                    !vm.file.url ||
+                    ! vm.file.title ||
+                    !vm.file.subject ||
+                    !vm.file.key ||
+                    !vm.file.keys ||
+                    !vm.file.wdrq ||
+                    !vm.file.type ||
+                    !vm.file.dw
+                ) {
+                    alert('请完善文件资料');
+                    return ;
+                }
+
+                var url = vm
+                    .file.id ==
+                null ? "../file/save" : "../file/update";
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: JSON.stringify(vm.file),
+                    success: function (r) {
+                        if (r.code === 0) {
+                            alert('上传成功，请在“我的文件”中查看吧');
+                            vm.add();
+                        } else {
+                            alert(r.msg);
+                        }
+                    }
+                });
+            },
+
+        }
+    });
+
+</script>
+</body>
+</html>

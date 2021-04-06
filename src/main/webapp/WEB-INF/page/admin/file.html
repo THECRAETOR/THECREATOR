@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>文件信息</title>
+    #parse("sys/header.html")
+</head>
+<body>
+<div id="rrapp" v-cloak>
+    <div v-show="showList">
+        <div class="grid-btn">
+            <div class="form-group col-sm-2">
+                <input type="text" class="form-control" v-model="q.name" @keyup.enter="query" placeholder="关键字">
+            </div>
+            <a class="btn btn-default" @click="query">查询</a>
+        </div>
+        <table id="jqGrid"></table>
+        <div id="jqGridPager"></div>
+    </div>
+    <div v-show="showAdd" class="panel panel-success">
+        <div class="panel-heading">{{title}}</div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文件名称：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.name}}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">保密级别：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.level}}
+                </div>
+            </div>
+            <div class="form-group" v-if="showInfo">
+                <div class="col-sm-2 control-label">上传时间：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.gmttime}}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">备注</div>
+                <div class="col-sm-10 fcs">
+                    如果设置了开放的时间段，则非开发时间段为私密，开放时间段为公开。
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">公开起止日期</div>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.begin"
+                           onclick="layui.laydate({elem: this, istime: true, format: 'YYYY-MM-DD hh:mm:ss', choose: function(date){vm.file.begin=date;}})"
+                           placeholder="开始日期"/>
+                </div>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.end"
+                           onclick="layui.laydate({elem: this, time: true, format: 'YYYY-MM-DD hh:mm:ss',  choose: function(date){vm.file.end=date;}})"
+                           placeholder="结束日期"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.author"
+                           placeholder="作者"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档日期</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.wdrq"
+                           onclick="layui.laydate({elem: this, istime: false, format: 'YYYY-MM-DD', choose: function(date){vm.file.wdrq=date;}})"
+                           placeholder="文档日期"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档标题</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.title"
+                           placeholder="文档标题"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档主题</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.subject"
+                           placeholder="文档主题"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">主关键词</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.key" placeholder="主关键词"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档关键词（三个用，隔开）</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.keys"
+                           placeholder="文档关键词（三个）"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者所在单位</div>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" :disabled="showInfo" v-model="file.dw"
+                           placeholder="作者所在单位"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档类型</div>
+                <div class="col-sm-10">
+                    <select name="" id="" class="form-control" :disabled="showInfo" v-model="file.type">
+                        <option value="文档">文档</option>
+                        <option value="PPT">PPT</option>
+                        <option value="图片">图片</option>
+                        <option value="表格">表格</option>
+                        <option value="可执行文件">可执行文件</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-primary" @click="saveOrUpdate" value="确定" v-if="!showInfo"/>
+                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+            </div>
+        </form>
+    </div>
+    <div v-show="showInfo" class="panel panel-success">
+        <div class="panel-heading">{{title}}</div>
+        <form class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文件名称：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.name}}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">保密级别：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.level}}
+                </div>
+            </div>
+            <div class="form-group" v-if="showInfo">
+                <div class="col-sm-2 control-label">上传时间：</div>
+                <div class="col-sm-10 fcs">
+                    {{file.gmttime}}
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者</div>
+                <div class="col-sm-10 fcs">
+                    {{file.author}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档日期</div>
+                <div class="col-sm-10 fcs">
+                    {{file.wdrq}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档标题</div>
+                <div class="col-sm-10 fcs">
+                    {{file.title}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档主题</div>
+                <div class="col-sm-10 fcs">
+                    {{file.subject}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">主关键词</div>
+                <div class="col-sm-10 fcs">
+                    {{file.key}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档关键词（三个用，隔开）</div>
+                <div class="col-sm-10 fcs">
+                    {{file.keys}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">作者所在单位</div>
+                <div class="col-sm-10 fcs">
+                    {{file.dw}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-2 control-label">文档类型</div>
+                <div class="col-sm-10 fcs">
+                    {{file.type}}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-2 control-label"></div>
+                <input type="button" class="btn btn-warning" @click="saveOrUpdate11" value="确定下载"/>
+                &nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="reload" value="返回"/>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="${rc.contextPath}/js/admin/file.js?_${date.systemTime}"></script>
+</body>
+</html>
